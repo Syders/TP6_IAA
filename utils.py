@@ -8,7 +8,7 @@ def build_dataset(path):
             if not l[-1] in data.keys():
                 data[l[-1]] = []
             else:
-                data[l[-1]].append(tuple(map(float, l[:-2])))
+                data[l[-1]].append(tuple(map(float, l[:-1])))
         learn = dict()
         test = dict()
         for key in data.keys():

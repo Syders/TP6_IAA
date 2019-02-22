@@ -1,9 +1,11 @@
+import time
 import numpy as np
+from sklearn.neighbors import KNeighborsRegressor
 
 import utils
 from bayes import GaussianBayes
 
-def dataset_for_bayes(dataset:dict):
+def format_dataset(dataset:dict):
     X = []
     y = []
     i = 0
@@ -14,17 +16,36 @@ def dataset_for_bayes(dataset:dict):
         i += 1
     return np.array(X), np.array(y), list(dataset.keys())
 
-
+def score(prediction:np.ndarray, y:np.ndarray) -> float:
+        """Compute the precision
+        X : shape (n_data, n_features)
+        y : shape (n_data)
+        """
+        return np.sum(y == prediction) / len(prediction)
 
 def main():
-    learn, test = utils.build_dataset("data/data12.csv")
-    b_X_test, b_y_test, b_conv_table = dataset_for_bayes(test)
-    b_X_learn, b_y_learn, _ = dataset_for_bayes(learn)
+    learn, test = utils.build_dataset("data/data3.csv")
+    X_test, y_test, conv_table = format_dataset(test)
+    X_learn, y_learn, _ = format_dataset(learn)
 
+    #print(X_test)
+    #print("\n")
+    #print(y_test)
+
+    start = time.perf_counter()
     b = GaussianBayes()
-    b.fit(b_X_learn, b_y_learn)
+    b.fit(X_learn, y_learn)
+    pred = b.predict(X_test)
+    end = time.perf_counter()
+    print("Time : ",(end-start),"  Score : ",score(pred, y_test))
 
-    print(b.score(b_X_test, b_y_test))
+    start = time.perf_counter()
+    neigh = KNeighborsRegressor(n_neighbors=5)
+    neigh.fit(X_learn, y_learn) 
+    pred = neigh.predict(X_test)
+    end = time.perf_counter()
+    print("Time : ",(end-start),"  Score : ",score(pred, y_test))
+
     
 
 if __name__ == "__main__":
