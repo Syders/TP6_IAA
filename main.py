@@ -69,66 +69,65 @@ def main():
     folder='./data/'
     files=os.listdir(folder)
     for name in files:
-        print("\n\nFilename=",name)
+        print("\n\n-Filename=",name)
         filename=folder+name
-        learn, test = utils.build_dataset(filename, random=False)
-        X_test, y_test, labels = format_dataset(test)
-        X_learn, y_learn, _ = format_dataset(learn)
-        data_dim = len(X_test[0])
+        rates=[0.8,0.5,0.2]
+        for rate in rates:
+        	print("\n\n\n-Actual rate:",rate)
+	        learn, test = utils.build_dataset(filename, random=False,rate=rate)
+	        X_test, y_test, labels = format_dataset(test)
+	        X_learn, y_learn, _ = format_dataset(learn)
+	        data_dim = len(X_test[0])
 
-        #print(X_test)
-        #print("\n")
-        #print(y_test)
+	        #Gaussian Bayes
 
-        #Gaussian Bayes
+	        start = time.perf_counter()
+	        b = GaussianBayes()
+	        b.fit(X_learn, y_learn)
+	        pred = b.predict(X_test)
 
-        start = time.perf_counter()
-        b = GaussianBayes()
-        b.fit(X_learn, y_learn)
-        pred = b.predict(X_test)
-
-        end = time.perf_counter()
-        print("\n-Gaussian Bayes:\nTime : ",(end-start))
-        print("Confusion Matrix :\n",confusion_matrix(y_test, pred),"\nScore : ",score(pred, y_test))
-        plot_confusion_matrix(confusion_matrix(y_test, pred), labels, title="Confusion matrix, Bayes, dim=%d"%data_dim)
-        
+	        end = time.perf_counter()
+	        print("\n-Gaussian Bayes:\nTime : ",(end-start))
+	        print("Confusion Matrix :\n",confusion_matrix(y_test, pred),"\nScore : ",score(pred, y_test))
+	        plot_confusion_matrix(confusion_matrix(y_test, pred), labels, title="Confusion matrix, Bayes, dim=%d"%data_dim)
+	        
 
 
-        #K Neighbors Regressor
-        success = []
-        bestPredN=[]
-        bestTime=0
-        bestScore=0
-        bestK=0
+	        #K Neighbors Regressor
+	        success = []
+	        bestPredN=[]
+	        bestTime=0
+	        bestScore=0
+	        bestK=0
 
-        #Test in different K
-        for i in range(1,40):
-            start = time.perf_counter()
-            neigh = KNeighborsRegressor(n_neighbors=i,weights='uniform')
-            neigh.fit(X_learn, y_learn) 
-            predN = neigh.predict(X_test).astype(int)
-            end = time.perf_counter()
-            success.append(score(predN, y_test))
-            if(bestScore<score(predN, y_test)):
-                bestPredN=predN
-                bestTime=end-start
-                bestScore=score(predN, y_test)
-                bestK=i
+	        #Test in different K
+	        for i in range(1,40):
+	            start = time.perf_counter()
+	            neigh = KNeighborsRegressor(n_neighbors=i,weights='uniform')
+	            neigh.fit(X_learn, y_learn) 
+	            predN = neigh.predict(X_test).astype(int)
+	            end = time.perf_counter()
+	            success.append(score(predN, y_test))
+	            if(bestScore<score(predN, y_test)):
+	                bestPredN=predN
+	                bestTime=end-start
+	                bestScore=score(predN, y_test)
+	                bestK=i
 
-        print("\n-The best: K=",bestK," Neighbors Regressor:\nTime : ",bestTime)
-        print("Confusion Matrix :\n",confusion_matrix(y_test, bestPredN),"\nScore : ",bestScore)
-        plot_confusion_matrix(confusion_matrix(y_test, bestPredN), labels, title="Confusion matrix, KNN, k=%d, dim=%d"%(bestK, data_dim))
+	        print("\n-The best: K=",bestK," Neighbors Regressor:\nTime : ",bestTime)
+	        print("Confusion Matrix :\n",confusion_matrix(y_test, bestPredN),"\nScore : ",bestScore)
+	        plot_confusion_matrix(confusion_matrix(y_test, bestPredN), labels, title="Confusion matrix, KNN, k=%d, dim=%d"%(bestK, data_dim))
 
-        #Affichage comparaison K Neighbors Regressor
-        plt.figure(figsize=(12,6))
-        plt.plot([score(pred,y_test) for x in range(40)],color='blue', label="Bayes")
-        plt.plot(range(1,40), success, color='green', linestyle='dashed', marker='o',
-            markerfacecolor='green',markersize=10, label="KNN")
-        plt.title('Success Rate (higher is better), dim=%d'%data_dim)
-        plt.xlabel('K value')
-        plt.ylabel('Success Rate')
-        plt.legend()
-        plt.show()
+	        #Affichage comparaison K Neighbors Regressor
+	        plt.figure(figsize=(12,6))
+	        plt.plot([score(pred,y_test) for x in range(40)],color='blue', label="Bayes")
+	        plt.plot(range(1,40), success, color='green', linestyle='dashed', marker='o',
+	            markerfacecolor='green',markersize=10, label="KNN")
+	        plt.title('Success Rate (higher is better), dim=%d'%data_dim)
+	        plt.xlabel('K value')
+	        plt.ylabel('Success Rate')
+	        plt.legend()
+	        plt.show()
 
     
 

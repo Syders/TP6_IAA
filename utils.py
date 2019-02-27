@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def build_dataset(path, random=False):
+def build_dataset(path,rate, random=False):
     with open(path, "r") as f:
         data = dict()
         for line in f:
@@ -15,11 +15,12 @@ def build_dataset(path, random=False):
         test = dict()
         for key in data.keys():
             if not random :
-                cut = int(len(data[key])*0.8)
+                cut = int(len(data[key])*rate)
                 learn[key] = data[key][:cut]
                 test[key] = data[key][cut:]
             else :
-                selection_test = np.random.choice(len(data[key]), size=(int(len(data[key])*0.2)+1), replace=False)
+                rateCut=1-rate
+                selection_test = np.random.choice(len(data[key]), size=(int(len(data[key])*rateCut)+1), replace=False)
                 selection_learn = np.delete(np.arange(len(data[key])), selection_test)
                 learn[key] = np.array(data[key])[selection_learn].tolist()
                 test[key] = np.array(data[key])[selection_test].tolist()
