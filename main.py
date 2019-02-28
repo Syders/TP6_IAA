@@ -73,7 +73,7 @@ def main():
     for name in files:
         print("\n\n-Filename=",name)
         filename=folder+name
-        
+        """
         rates=[0.8,0.5,0.2]
         for rate in rates:
             learnCut = round(rate*100)
@@ -85,7 +85,6 @@ def main():
             data_dim = len(X_test[0])
 
             #Gaussian Bayes
-
             start = time.perf_counter()
             b = GaussianBayes(diag=True)
             b.fit(X_learn, y_learn)
@@ -140,14 +139,15 @@ def main():
             plt.ylabel('Success Rate')
             plt.legend()
             plt.savefig("bayesVknn_dim%d_div%d"%(data_dim, rate))
-        
+        """
         
         #plot effect of learn/test division
         bayesScores = []
         knnScores = []
-        cutRange = range(10, 100, 10)
+        cutRange = range(5, 100, 5)
         for i in cutRange:
-            rate = round(i/100.0, 1)
+            rate = round(i/100.0, 2)
+            print(rate)
             learn, test = utils.build_dataset(filename, random=False,learnCut=rate)
             X_test, y_test, labels = format_dataset(test)
             X_learn, y_learn, _ = format_dataset(learn)
@@ -169,7 +169,7 @@ def main():
         plt.plot(knnScores, color='green', linestyle='dashed', marker='o',
                 markerfacecolor='green',markersize=5, label="KNN")
         plt.title('Success Rate with different learn/test division, dim=%d'%(data_dim))
-        plt.xlabel('Learn cut (%)')
+        plt.xlabel('Learn cut of the dataset (%)')
         plt.ylabel('Success Rate')
         plt.legend()
         plt.savefig("learn-test-div_dim%d"%(data_dim), pad_inches=1)
