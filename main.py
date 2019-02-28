@@ -73,7 +73,7 @@ def main():
     for name in files:
         print("\n\n-Filename=",name)
         filename=folder+name
-        """
+        
         rates=[0.8,0.5,0.2]
         for rate in rates:
             learnCut = round(rate*100)
@@ -138,8 +138,8 @@ def main():
             plt.xlabel('K value')
             plt.ylabel('Success Rate')
             plt.legend()
-            plt.savefig("bayesVknn_dim%d_div%d"%(data_dim, rate))
-        """
+            plt.savefig("bayesVknn_dim%d_div%d"%(data_dim, learnCut))
+        
         
         #plot effect of learn/test division
         bayesScores = []
@@ -147,7 +147,7 @@ def main():
         cutRange = range(5, 100, 5)
         for i in cutRange:
             rate = round(i/100.0, 2)
-            print(rate)
+            #print(rate)
             learn, test = utils.build_dataset(filename, random=False,learnCut=rate)
             X_test, y_test, labels = format_dataset(test)
             X_learn, y_learn, _ = format_dataset(learn)
