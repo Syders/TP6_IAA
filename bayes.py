@@ -27,7 +27,6 @@ class GaussianBayes(object):
 
         # initalize the output vector
         y = np.empty(n_obs)
-        
         # log of the probability
         score = lambda x, i: -0.5*(n_features*math.log(2*math.pi) + \
             math.log(np.linalg.det(self.sigma[i])) + \

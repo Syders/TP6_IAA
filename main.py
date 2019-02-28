@@ -32,7 +32,8 @@ def score(prediction:np.ndarray, y:np.ndarray) -> float:
 def plot_confusion_matrix(cm, classes,
                           normalize=False,
                           title='Confusion matrix',
-                          cmap=cm.Blues):
+                          cmap=cm.Blues,
+                          filename="cm"):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
@@ -46,6 +47,7 @@ def plot_confusion_matrix(cm, classes,
 
     #print(cm)
 
+    plt.close()
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
     plt.title(title)
     plt.colorbar()
@@ -63,7 +65,7 @@ def plot_confusion_matrix(cm, classes,
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
     plt.tight_layout()
-    plt.show()
+    plt.savefig(filename)
 
 def main():
     folder='./data/'
@@ -71,63 +73,106 @@ def main():
     for name in files:
         print("\n\n-Filename=",name)
         filename=folder+name
+        
         rates=[0.8,0.5,0.2]
         for rate in rates:
-        	print("\n\n\n-Actual rate:",rate)
-	        learn, test = utils.build_dataset(filename, random=False,rate=rate)
-	        X_test, y_test, labels = format_dataset(test)
-	        X_learn, y_learn, _ = format_dataset(learn)
-	        data_dim = len(X_test[0])
+            learnCut = round(rate*100)
+            testCut = round((1-rate)*100)
+            print("\n\n\n-Actual rate:",rate)
+            learn, test = utils.build_dataset(filename, random=False,learnCut=rate)
+            X_test, y_test, labels = format_dataset(test)
+            X_learn, y_learn, _ = format_dataset(learn)
+            data_dim = len(X_test[0])
 
-	        #Gaussian Bayes
+            #Gaussian Bayes
 
-	        start = time.perf_counter()
-	        b = GaussianBayes()
-	        b.fit(X_learn, y_learn)
-	        pred = b.predict(X_test)
+            start = time.perf_counter()
+            b = GaussianBayes(diag=True)
+            b.fit(X_learn, y_learn)
+            pred = b.predict(X_test)
 
-	        end = time.perf_counter()
-	        print("\n-Gaussian Bayes:\nTime : ",(end-start))
-	        print("Confusion Matrix :\n",confusion_matrix(y_test, pred),"\nScore : ",score(pred, y_test))
-	        plot_confusion_matrix(confusion_matrix(y_test, pred), labels, title="Confusion matrix, Bayes, dim=%d"%data_dim)
-	        
+            end = time.perf_counter()
+            print("\n-Gaussian Bayes:\nTime : ",(end-start))
+            print("Confusion Matrix :\n",confusion_matrix(y_test, pred),"\nScore : ",score(pred, y_test))
+            plot_confusion_matrix(confusion_matrix(y_test, pred), 
+                                    labels, 
+                                    title="Confusion matrix, Bayes, dim=%d, learn/test division : %d%%/%d%%"%(data_dim, learnCut,testCut),
+                                    filename="cm_bayes_dim%d_div%d"%(data_dim, learnCut) )
+            
 
 
-	        #K Neighbors Regressor
-	        success = []
-	        bestPredN=[]
-	        bestTime=0
-	        bestScore=0
-	        bestK=0
+            #K Neighbors Regressor
+            success = []
+            bestPredN=[]
+            bestTime=0
+            bestScore=0
+            bestK=0
 
-	        #Test in different K
-	        for i in range(1,40):
-	            start = time.perf_counter()
-	            neigh = KNeighborsRegressor(n_neighbors=i,weights='uniform')
-	            neigh.fit(X_learn, y_learn) 
-	            predN = neigh.predict(X_test).astype(int)
-	            end = time.perf_counter()
-	            success.append(score(predN, y_test))
-	            if(bestScore<score(predN, y_test)):
-	                bestPredN=predN
-	                bestTime=end-start
-	                bestScore=score(predN, y_test)
-	                bestK=i
+            #Test in different K
+            for i in range(1,40):
+                start = time.perf_counter()
+                neigh = KNeighborsRegressor(n_neighbors=i,weights='uniform')
+                neigh.fit(X_learn, y_learn) 
+                predN = neigh.predict(X_test).astype(int)
+                end = time.perf_counter()
+                success.append(score(predN, y_test))
+                if(bestScore<score(predN, y_test)):
+                    bestPredN=predN
+                    bestTime=end-start
+                    bestScore=score(predN, y_test)
+                    bestK=i
 
-	        print("\n-The best: K=",bestK," Neighbors Regressor:\nTime : ",bestTime)
-	        print("Confusion Matrix :\n",confusion_matrix(y_test, bestPredN),"\nScore : ",bestScore)
-	        plot_confusion_matrix(confusion_matrix(y_test, bestPredN), labels, title="Confusion matrix, KNN, k=%d, dim=%d"%(bestK, data_dim))
+            print("\n-The best: K=",bestK," Neighbors Regressor:\nTime : ",bestTime)
+            print("Confusion Matrix :\n",confusion_matrix(y_test, bestPredN),"\nScore : ",bestScore)
+            plot_confusion_matrix(confusion_matrix(y_test, bestPredN), 
+                                    labels, 
+                                    title='Confusion matrix, KNN, k=%d, dim=%d, learn/test division : %d%%/%d%%'%(bestK, data_dim, learnCut,testCut),
+                                    filename="cm_knn_k%d_dim%d_div%d"%(bestK, data_dim, learnCut) )
 
-	        #Affichage comparaison K Neighbors Regressor
-	        plt.figure(figsize=(12,6))
-	        plt.plot([score(pred,y_test) for x in range(40)],color='blue', label="Bayes")
-	        plt.plot(range(1,40), success, color='green', linestyle='dashed', marker='o',
-	            markerfacecolor='green',markersize=10, label="KNN")
-	        plt.title('Success Rate (higher is better), dim=%d'%data_dim)
-	        plt.xlabel('K value')
-	        plt.ylabel('Success Rate')
-	        plt.legend()
-	        plt.show()
+            #Affichage comparaison K Neighbors Regressor
+            plt.close()
+            #plt.figure(figsize=(12,6))
+            plt.plot([score(pred,y_test) for x in range(40)],color='blue', label="Bayes")
+            plt.plot(range(1,40), success, color='green', linestyle='dashed', marker='o',
+                markerfacecolor='green',markersize=5, label="KNN")
+            plt.title('Success Rate (higher is better), dim=%d, learn/test division : %d%%/%d%%'%(data_dim, learnCut,testCut))
+            plt.xlabel('K value')
+            plt.ylabel('Success Rate')
+            plt.legend()
+            plt.savefig("bayesVknn_dim%d_div%d"%(data_dim, rate))
+        
+        
+        #plot effect of learn/test division
+        bayesScores = []
+        knnScores = []
+        cutRange = range(10, 100, 10)
+        for i in cutRange:
+            rate = round(i/100.0, 1)
+            learn, test = utils.build_dataset(filename, random=False,learnCut=rate)
+            X_test, y_test, labels = format_dataset(test)
+            X_learn, y_learn, _ = format_dataset(learn)
+            data_dim = len(X_test[0])
+
+            b = GaussianBayes(diag=True)
+            b.fit(X_learn, y_learn)
+            pred = b.predict(X_test)
+            bayesScores.append(score(pred, y_test))
+
+            neigh = KNeighborsRegressor(n_neighbors=1,weights='uniform')
+            neigh.fit(X_learn, y_learn) 
+            pred = neigh.predict(X_test).astype(int)
+            knnScores.append(score(pred, y_test))
+        plt.close()
+        #plt.ylim(bottom=0, top=1.1)
+        plt.xticks(ticks=range(len(cutRange)), labels=[str(i) for i in cutRange])
+        plt.plot(bayesScores ,color='blue', label="Bayes")
+        plt.plot(knnScores, color='green', linestyle='dashed', marker='o',
+                markerfacecolor='green',markersize=5, label="KNN")
+        plt.title('Success Rate with different learn/test division, dim=%d'%(data_dim))
+        plt.xlabel('Learn cut (%)')
+        plt.ylabel('Success Rate')
+        plt.legend()
+        plt.savefig("learn-test-div_dim%d"%(data_dim), pad_inches=1)
 
     
 
